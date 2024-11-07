@@ -15,7 +15,7 @@ CREATE TABLE main_entity (
 CREATE TABLE op1 (
     id bigserial PRIMARY KEY,
     main_entity_id bigint REFERENCES main_entity(id),
-    amount numeric(20,2) NOT NULL,
+    value numeric(20,2) NOT NULL,
     status text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -23,7 +23,7 @@ CREATE TABLE op1 (
 CREATE TABLE op1_event_data (
     id bigserial not null,
     parent_id bigint not null,
-    main_entity_id bigint,
+    main_entity_id bigint REFERENCES main_entity(id),
     status text NOT NULL,
     event_date timestamptz not null default date_trunc('day', now()),
     created_at timestamptz NOT NULL DEFAULT now(),
@@ -47,7 +47,7 @@ CREATE TABLE transactions (
     id bigserial not null,
     parent_id bigint not null,
     main_entity_id bigint not null REFERENCES main_entity(id),
-    amount numeric(20,2) not null,
+    value numeric(20,2) not null,
     created_at timestamptz not null default now(),
     record_date timestamptz not null default date_trunc('day', now()),
     CONSTRAINT transactions_main_entity_fk FOREIGN KEY (main_entity_id) REFERENCES main_entity(id),
@@ -86,8 +86,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION update_op1_and_transactions() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-    INSERT INTO transactions (parent_id, main_entity_id, amount)
-    VALUES (NEW.id, NEW.main_entity_id, NEW.amount);
+    INSERT INTO transactions (parent_id, main_entity_id, value)
+    VALUES (NEW.id, NEW.main_entity_id, NEW.value);
 
     PERFORM update_op1_status(NEW.id, NEW.main_entity_id, NEW.status);
 
@@ -102,11 +102,11 @@ EXECUTE PROCEDURE update_op1_and_transactions();
 
 CREATE OR REPLACE FUNCTION simulate(
     _main_id bigint,
-    _amount numeric
+    _value numeric
 ) RETURNS void AS $$
 BEGIN
-    INSERT INTO op1 (main_entity_id, amount, status)
-    VALUES (_main_id, _amount, 'created');
+    INSERT INTO op1 (main_entity_id, value, status)
+    VALUES (_main_id, _value, 'created');
 
     -- Get the last inserted id
     PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'pending');
