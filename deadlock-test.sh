@@ -109,9 +109,9 @@ BEGIN
     VALUES (_main_id, _value, 'created');
 
     -- Get the last inserted id
-    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'pending');
-    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'completed');
-    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'settled');
+    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'status1');
+    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'status2');
+    PERFORM update_op1_status(currval('op1_id_seq'), _main_id, 'status3');
 END;
 $$ LANGUAGE plpgsql;
 
