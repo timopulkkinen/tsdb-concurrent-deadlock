@@ -12,13 +12,6 @@ CREATE TABLE main_entity (
     name text NOT NULL
 );
 
-CREATE TABLE linked_entity (
-    id bigserial PRIMARY KEY,
-    main_entity_id bigint NOT NULL REFERENCES main_entity(id),
-    value numeric(20,2) NOT NULL DEFAULT 0,
-    UNIQUE(main_entity_id)
-);
-
 CREATE TABLE parent_record (
     id bigserial PRIMARY KEY,
     main_entity_id bigint REFERENCES main_entity(id),
@@ -112,10 +105,6 @@ CREATE OR REPLACE FUNCTION simulate(
     _amount numeric
 ) RETURNS void AS $$
 BEGIN
-    INSERT INTO linked_entity (main_entity_id, value)
-    VALUES (_main_id, 0)
-    ON CONFLICT (main_entity_id) DO NOTHING;
-
     INSERT INTO parent_record (main_entity_id, amount, status)
     VALUES (_main_id, _amount, 'created');
 
@@ -130,7 +119,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION setup_test_data() RETURNS SETOF bigint AS $$
 BEGIN
     -- Clean up previous test data if exists
-    TRUNCATE parent_event, time_series_record, parent_record, linked_entity, main_entity CASCADE;
+    TRUNCATE parent_event, time_series_record, parent_record, main_entity CASCADE;
 
     -- Create test entities and return their IDs
     RETURN QUERY INSERT INTO main_entity (name)
